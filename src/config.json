@@ -1,0 +1,32 @@
+{
+    "custom_files_for_langs": {},
+    "editor blocking": "code",
+    "editor blocking parameters": ["-w"],
+    "editor non-blocking": "code",
+    "editor non-blocking parameters":  [],
+    "editor test for avalability and auto chose available editor": false,
+    "editor field content and save back file extension": "tex",
+    "file extension from field": "lang",
+    "replace built-in anki html editor": true,
+    "shortcut editor to open selection in text editor": "Ctrl+F6",
+    "shortcut editor to send selected field content to text editor and save back": "Ctrl+Shift+F6",
+    "shortcut reviewer to open selection in text editor": "Ctrl+F6",
+    "tags to file ending": {
+        "css": [
+            "css"
+        ],
+        "html": [
+            "html",
+            "html5"
+        ],
+        "js": [
+            "js",
+            "javascript"
+        ],
+        "py": [
+            "py",
+            "python3",
+            "python"
+        ]
+    }
+}
