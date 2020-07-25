@@ -11,6 +11,7 @@
     "shortcut editor to open selection in text editor": "Ctrl+F6",
     "shortcut editor to send selected field content to text editor and save back": "Ctrl+Shift+F6",
     "shortcut reviewer to open selection in text editor": "Ctrl+F6",
+    "show button to edit selection externally and save it back": true,
     "tags to file ending": {
         "css": [
             "css"

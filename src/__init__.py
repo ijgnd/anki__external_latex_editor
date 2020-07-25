@@ -1,18 +1,45 @@
 # License: GNU AGPL, version 3 or later; https://www.gnu.org/licenses/agpl.html
-# Copyright: github.com/pointtonull 
+# Copyright: github.com/pointtonull
 #            ijgnd
 #            Damien Elmes
+#
+#
+#
+#
+# This add-on uses a octicons-tools.svg covered by the following copyright
+# and permission notice:
+#
+#     Copyright © GithHub
+#
+#     Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+#     and associated documentation files (the "Software"), to deal in the Software without
+#     restriction, including without limitation the rights to use, copy, modify, merge, publish,
+#     distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the
+#     Software is furnished to do so, subject to the following conditions:
+#
+#     The above copyright notice and this permission notice shall be included in all copies or
+#     substantial portions of the Software.
+#
+#     The Software is provided "as is", without warranty of any kind, express or implied, including
+#     but not limited to the warranties of merchantability, fitness for a particular purpose
+#     and noninfringement. In no event shall the authors or copyright holders be liable for any
+#     claim, damages or other liability, whether in an action of contract, tort or otherwise,
+#     arising from, out of or in connection with the Software or the use or other dealings in
+#     the Software.
 
+import os
 
 from anki.hooks import wrap, addHook
 from anki.utils import (
     stripHTML,
 )
+from aqt import gui_hooks
 from aqt import mw
 from aqt.editor import Editor
+from aqt.qt import Qt
 from aqt.utils import tooltip
 
-from .config import gc
+from .config import addon_path, gc
 from .helper import adjust_text_to_html
 from .process_string_in_texteditor import edit_string_externally_and_return_mod
 
@@ -69,7 +96,7 @@ def sel_to_external_editor(note, selected, block=False, lang=None):
                     for l in v:
                         if t == l:
                             lang = k
-                            break 
+                            break
     if lang is None:
         tooltip("no language set. no relevant field or tag found.")
         return
@@ -135,7 +162,7 @@ def __editor_helper(self, saveback):
         set_field_to_text(self, thefield, new)
 
 
-def _editor_helper(self, saveback): 
+def _editor_helper(self, saveback):
     self.saveNow(lambda e=self, s=saveback: __editor_helper(e, s))
 
 
@@ -145,6 +172,7 @@ def editor_helper(self, saveback):
     if not saveback:
         self.saveNow(lambda e=self, s=saveback: __editor_helper(e, s))
     else:
+        self.nid_latex_helper = True  # can't set to self.note.id because it's 0 for new.
         global oldcontent
         oldcontent = self.note.fields[thefield]
         jsf = f"""surroundSelection("{unique_before}", "{unique_after}")"""
@@ -176,3 +204,60 @@ def editorShortcuts(cuts, editor):
     if cut:
         cuts.append((cut, lambda e=editor: editor_helper(e, saveback=True)))
 addHook("setupEditorShortcuts", editorShortcuts)
+
+
+
+
+
+def restore_prior(self):
+    if not thefield == self.currentField:
+        tooltip("active field is not the last field edited externally. Aborting.")
+        return
+    if self.currentField is not None:
+        active = self.currentField + 1  # zero is False
+    else:
+        active = None
+    self.note.fields[thefield] = oldcontent
+    if active:
+        self.loadNote(focusTo=active-1)
+    else:
+        self.loadNote()
+        self.web.setFocus()
+
+
+def button_helper(self):
+    # self is editor
+    modifiers = self.mw.app.queryKeyboardModifiers()
+    shift_and_click = modifiers == Qt.ShiftModifier
+    if shift_and_click:
+        if self.nid_latex_helper:
+            restore_prior(self)
+        else:
+            tooltip("no prior version stored. Aborting")
+        return
+    editor_helper(self, saveback=True)
+
+
+
+def reset(self):
+    self.nid_latex_helper = None
+gui_hooks.editor_did_init.append(reset)
+
+
+
+
+if gc("show button to edit selection externally and save it back"):
+    tip = "send selection to external editor and save back"
+    cut = gc("shortcut editor to send selected field content to text editor and save back")
+    if cut:
+        tip += f" ({cut}"
+    def setupEditorButtonsFilterFD(buttons, editor):
+        b = editor.addButton(
+                icon=os.path.join(addon_path, "octicons-tools.svg"),
+                cmd="restore_prior_external_text_editor_fork",
+                func=button_helper,
+                tip=tip,
+            )
+        buttons.append(b)
+        return buttons
+    addHook("setupEditorButtons", setupEditorButtonsFilterFD)

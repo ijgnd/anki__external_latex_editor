@@ -8,3 +8,6 @@ def gc(arg, fail=False):
         return conf.get(arg, fail)
     else:
         return fail
+
+addon_path = os.path.dirname(__file__)
+addonfoldername = os.path.basename(addon_path)
